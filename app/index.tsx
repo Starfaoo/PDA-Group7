@@ -1,34 +1,74 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
-import { useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
 
 export default function SplashScreen() {
   const router = useRouter();
+  const [fadeAnim] = useState(new Animated.Value(0)); // Opacity for smooth fade-in
+  const [scaleAnim] = useState(new Animated.Value(0.8)); // Scale for slight zoom effect
 
   useEffect(() => {
-    checkFirstLaunch();
-  }, []);
+    // 1. Run Entry Animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      })
+    ]).start();
 
-  const checkFirstLaunch = async () => {
-    // 1. Simulate a 2-second delay for the splash logo
-    setTimeout(async () => {
-      // 2. Check if user has seen onboarding before
-      const hasSeenOnboarding = await AsyncStorage.getItem("hasSeenOnboarding");
+    // 2. Check User Status & Navigate
+    const prepareApp = async () => {
+      // Wait for 2.5 seconds (Simulate loading)
+      await new Promise(resolve => setTimeout(resolve, 2500));
 
-      if (hasSeenOnboarding === "true") {
-        router.replace("/login"); // Go to Login if they've used the app before
-      } else {
-        router.replace("/onboarding"); // Go to Onboarding if it's their first time
+      try {
+        const hasSeenOnboarding = await AsyncStorage.getItem('hasSeenOnboarding');
+        
+        // Navigate based on history
+        if (hasSeenOnboarding === 'true') {
+          router.replace('/login');
+        } else {
+          router.replace('/onboarding');
+        }
+      } catch (e) {
+        // Fallback if storage fails
+        router.replace('/onboarding');
       }
-    }, 2000);
-  };
+    };
+
+    prepareApp();
+  }, []);
 
   return (
     <View style={styles.container}>
-      {/* Replace this Text with your Logo Image later */}
-      <Text style={styles.logoText}>🌿 PlantScan</Text>
-      <Text style={styles.subText}>Group 7 Project</Text>
+      <Animated.View style={[
+        styles.logoContainer, 
+        { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
+      ]}>
+        
+        {/* Leaf Logo (Mimicking the 'ECO' design) */}
+        <View style={styles.iconContainer}>
+          <MaterialCommunityIcons name="leaf" size={120} color="#458c49" />
+          {/* Decorative smaller leaf to mimic the abstract shape */}
+          <MaterialCommunityIcons name="leaf" size={60} color="#2e6b32" style={styles.smallLeaf} />
+        </View>
+
+        {/* App Name */}
+        <Text style={styles.appName}>AgriLens</Text>
+      </Animated.View>
+      
+      {/* Optional: Loading text at bottom */}
+     
     </View>
   );
 }
@@ -36,18 +76,41 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#4CAF50", // Nice Plant Green
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#ffffff', // White background as per design
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  logoText: {
-    fontSize: 40,
-    fontWeight: "bold",
-    color: "white",
-    marginBottom: 10,
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  subText: {
-    fontSize: 16,
-    color: "#E8F5E9",
+  iconContainer: {
+    position: 'relative',
+    width: 140,
+    height: 140,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
+  smallLeaf: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    transform: [{ rotate: '-45deg' }],
+    opacity: 0.9,
+  },
+  appName: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#458c49', // The specific green from your screenshot
+    letterSpacing: 2,
+    fontFamily: 'monospace', // Matches the stylized font in the image
+  },
+  footerText: {
+    position: 'absolute',
+    bottom: 50,
+    color: '#aaa',
+    fontSize: 12,
+    letterSpacing: 1,
+  }
 });

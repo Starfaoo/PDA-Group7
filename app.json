@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "PDA",
-    "slug": "PDA",
+    "slug": "agrilens",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.cpegroup7.agrilens"
     },
     "web": {
       "output": "static",
@@ -43,6 +44,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "dd93b04b-9112-47c1-9de2-32a274ffc031"
+      }
+    },
+    "owner": "cpe-group7"
   }
 }
