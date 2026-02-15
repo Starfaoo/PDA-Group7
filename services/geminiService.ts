@@ -3,25 +3,15 @@ import * as FileSystem from "expo-file-system";
 
 // Enable demo mode automatically when no Gemini API key is configured
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
-const DEMO_MODE = !GEMINI_API_KEY;
 
-if (DEMO_MODE) {
-  console.warn(
-    "⚠️ Gemini API key not found — running in DEMO mode. Set EXPO_PUBLIC_GEMINI_API_KEY to enable real analysis.",
-  );
-}
-
-// Initialize the Gemini API client when API key is present
+// Initialize the Gemini API client
 let genAI: any = null;
-if (!DEMO_MODE) {
-  try {
-    genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    console.log("✅ Gemini client initialized");
-  } catch (e) {
-    console.error("❌ Failed to initialize Gemini client:", e);
-    // Fallback to demo mode if initialization fails
-    genAI = null;
-  }
+try {
+  genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  console.log("✅ Gemini client initialized");
+} catch (e) {
+  console.error("❌ Failed to initialize Gemini client:", e);
+  genAI = null;
 }
 
 export interface PlantAnalysisResult {
@@ -41,69 +31,25 @@ export interface PlantAnalysisResult {
 export async function analyzePlantImage(
   imageUri: string,
 ): Promise<PlantAnalysisResult> {
-  // Demo mode - return mock results if no valid Gemini client
-  if (DEMO_MODE || !genAI) {
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API delay
-
-    const mockResults = [
-      {
-        disease: "Healthy Plant",
-        confidence: "92%",
-        description:
-          "Your plant appears to be in excellent health! The leaves show no signs of disease, discoloration, or damage. Continue with your current care routine.",
-        treatment:
-          "Keep up the great work! Maintain regular watering, ensure adequate sunlight, and continue monitoring for any changes.",
-        color: "#4CAF50",
-        severity: 0,
-        factors: {
-          humidity: "Optimal",
-          sunlight: "Adequate",
-          airflow: "Good",
-        },
-      },
-      {
-        disease: "Early Blight",
-        confidence: "87%",
-        description:
-          "Detected early signs of fungal infection on the leaves. Small dark spots with concentric rings are visible, which is characteristic of early blight.",
-        treatment:
-          "Remove affected leaves immediately. Apply copper-based fungicide. Improve air circulation and avoid overhead watering. Space plants properly for better airflow.",
-        color: "#FF5252",
-        severity: 2,
-        factors: {
-          humidity: "High",
-          sunlight: "Low",
-          airflow: "Poor",
-        },
-      },
-      {
-        disease: "Powdery Mildew",
-        confidence: "91%",
-        description:
-          "White powdery coating visible on leaf surfaces, indicating fungal growth. This is a common issue in humid conditions with poor air circulation.",
-        treatment:
-          "Spray with baking soda solution (1 tsp baking soda + 1 quart water). Improve air circulation by spacing plants. Reduce humidity if possible. Apply sulfur-based fungicide as needed.",
-        color: "#FF9800",
-        severity: 3,
-        factors: {
-          humidity: "Very High",
-          sunlight: "Adequate",
-          airflow: "Poor",
-        },
-      },
-    ];
-
-    return mockResults[Math.floor(Math.random() * mockResults.length)];
-  }
-
   try {
+    console.log("🔍 Gemini API Key present:", !!GEMINI_API_KEY);
+    console.log("🔍 GenAI client initialized:", !!genAI);
+
+    if (!genAI || !GEMINI_API_KEY) {
+      throw new Error(
+        "Gemini API client not initialized. Please set EXPO_PUBLIC_GEMINI_API_KEY.",
+      );
+    }
+
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    console.log("📱 Model loaded: gemini-1.5-flash");
 
     // Convert image to base64
+    console.log("🖼️ Converting image to base64:", imageUri);
     const base64Image = await convertImageToBase64(imageUri);
+    console.log("✅ Image converted, size:", base64Image.length, "bytes");
 
-    const prompt = `
-Analyze this plant leaf image and determine if it's healthy or has any diseases. 
+    const prompt = `Analyze this plant leaf image and determine if it's healthy or has any diseases. 
 Provide a detailed analysis including:
 1. Disease name or "Healthy Plant" if no issues
 2. Confidence percentage (as a number without %)
@@ -112,7 +58,7 @@ Provide a detailed analysis including:
 5. Severity level (1-5, where 1 is mild and 5 is severe)
 6. Contributing factors assessment (High/Medium/Low for humidity, sunlight, airflow)
 
-Format the response as JSON with these exact keys:
+Format the response ONLY as valid JSON with these exact keys:
 {
   "disease": "string",
   "confidence": number,
@@ -124,9 +70,9 @@ Format the response as JSON with these exact keys:
     "sunlight": "string", 
     "airflow": "string"
   }
-}
-`;
+}`;
 
+    console.log("🚀 Sending request to Gemini API...");
     const result = await model.generateContent([
       prompt,
       {
@@ -137,27 +83,37 @@ Format the response as JSON with these exact keys:
       },
     ]);
 
+    console.log("✅ Received response from Gemini");
     const response = await result.response;
     const text = await response.text();
+    console.log("📄 Raw response:", text.substring(0, 200));
 
     // Clean the response text (remove markdown formatting if present)
-    const cleanText = text.replace(/```json\n?|\n?```/g, "").trim();
+    const cleanText = text
+      .replace(/```json\n?|\n?```/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
+    console.log("🧹 Cleaned response:", cleanText.substring(0, 200));
 
     // Parse the JSON response
     const analysis = JSON.parse(cleanText);
+    console.log("✅ Parsed analysis:", analysis);
 
     // Add color based on result
     const color = analysis.disease.toLowerCase().includes("healthy")
       ? "#4CAF50"
       : "#FF5252";
 
-    return {
+    const finalResult = {
       ...analysis,
       color,
       confidence: analysis.confidence + "%",
     };
+
+    console.log("🎉 Final result:", finalResult);
+    return finalResult;
   } catch (error) {
-    console.error("Error analyzing plant image:", error);
+    console.error("❌ Error analyzing plant image:", error);
     // Fallback to mock data if API fails
     return {
       disease: "Analysis Failed",

@@ -11,11 +11,11 @@ import {
   Switch,
   StatusBar,
 } from "react-native";
-import { useApp } from "./context"; 
+import { useApp } from "./context";
 
 export default function SettingsScreen() {
   const router = useRouter();
-  
+
   // Get everything we need from Context
   const { user, logout, isDarkMode, toggleTheme, resetApp } = useApp();
 
@@ -29,7 +29,7 @@ export default function SettingsScreen() {
         onPress: async () => {
           try {
             await logout();
-            router.replace("/login");
+            // Navigation will be handled by _layout.tsx based on auth state
           } catch (error) {
             // Error is handled in context, but good to have backup
           }
@@ -52,13 +52,13 @@ export default function SettingsScreen() {
             try {
               await resetApp();
               // Force navigation to onboarding
-              router.replace("/onboarding"); 
+              router.replace("/");
             } catch (error) {
               Alert.alert("Error", "Failed to reset device data.");
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -75,7 +75,7 @@ export default function SettingsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar barStyle="light-content" />
-      
+
       {/* Green Header */}
       <View style={styles.headerBackground}>
         <View style={styles.headerNav}>
@@ -109,7 +109,9 @@ export default function SettingsScreen() {
       >
         {/* ACCOUNT SECTION */}
         <Text style={styles.sectionHeader}>ACCOUNT</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: theme.cardBg }]}>
+        <View
+          style={[styles.sectionContainer, { backgroundColor: theme.cardBg }]}
+        >
           <TouchableOpacity
             style={styles.row}
             onPress={() => Alert.alert("Profile", "Edit profile coming soon!")}
@@ -117,8 +119,12 @@ export default function SettingsScreen() {
             <View style={styles.rowLeft}>
               <Feather name="user" size={20} color={theme.icon} />
               <View style={styles.rowTextContainer}>
-                <Text style={[styles.rowTitle, { color: theme.text }]}>Profile</Text>
-                <Text style={[styles.rowSub, { color: theme.subText }]}>Edit details</Text>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>
+                  Profile
+                </Text>
+                <Text style={[styles.rowSub, { color: theme.subText }]}>
+                  Edit details
+                </Text>
               </View>
             </View>
             <Feather name="chevron-right" size={20} color="#ccc" />
@@ -129,27 +135,40 @@ export default function SettingsScreen() {
           <View style={styles.row}>
             <View style={styles.rowLeft}>
               <Feather name="bell" size={20} color={theme.icon} />
-              <Text style={[styles.rowTitle, { color: theme.text, marginLeft: 15 }]}>
+              <Text
+                style={[styles.rowTitle, { color: theme.text, marginLeft: 15 }]}
+              >
                 Notifications
               </Text>
             </View>
-            <Switch value={true} trackColor={{ false: "#767577", true: "#00C853" }} />
+            <Switch
+              value={true}
+              trackColor={{ false: "#767577", true: "#00C853" }}
+            />
           </View>
         </View>
 
         {/* PREFERENCE SECTION */}
         <Text style={styles.sectionHeader}>PREFERENCE</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: theme.cardBg }]}>
+        <View
+          style={[styles.sectionContainer, { backgroundColor: theme.cardBg }]}
+        >
           <View style={styles.row}>
             <View style={styles.rowLeft}>
-              <Feather name={isDarkMode ? "moon" : "sun"} size={20} color={theme.icon} />
-              <Text style={[styles.rowTitle, { color: theme.text, marginLeft: 15 }]}>
+              <Feather
+                name={isDarkMode ? "moon" : "sun"}
+                size={20}
+                color={theme.icon}
+              />
+              <Text
+                style={[styles.rowTitle, { color: theme.text, marginLeft: 15 }]}
+              >
                 Dark Mode
               </Text>
             </View>
             {/* THEME TOGGLE SWITCH */}
-            <Switch 
-              value={isDarkMode} 
+            <Switch
+              value={isDarkMode}
               onValueChange={toggleTheme}
               trackColor={{ false: "#767577", true: "#00C853" }}
             />
@@ -158,14 +177,18 @@ export default function SettingsScreen() {
 
         {/* ABOUT SECTION */}
         <Text style={styles.sectionHeader}>ABOUT</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: theme.cardBg }]}>
+        <View
+          style={[styles.sectionContainer, { backgroundColor: theme.cardBg }]}
+        >
           <TouchableOpacity
             style={styles.row}
             onPress={() => Alert.alert("Privacy", "Standard Privacy Policy.")}
           >
             <View style={styles.rowLeft}>
               <Feather name="shield" size={20} color={theme.icon} />
-              <Text style={[styles.rowTitle, { color: theme.text, marginLeft: 15 }]}>
+              <Text
+                style={[styles.rowTitle, { color: theme.text, marginLeft: 15 }]}
+              >
                 Privacy Policy
               </Text>
             </View>
@@ -178,8 +201,12 @@ export default function SettingsScreen() {
             <View style={styles.rowLeft}>
               <Feather name="info" size={20} color={theme.icon} />
               <View style={styles.rowTextContainer}>
-                <Text style={[styles.rowTitle, { color: theme.text }]}>App Version</Text>
-                <Text style={[styles.rowSub, { color: theme.subText }]}>1.0.0</Text>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>
+                  App Version
+                </Text>
+                <Text style={[styles.rowSub, { color: theme.subText }]}>
+                  1.0.0
+                </Text>
               </View>
             </View>
           </View>
@@ -187,13 +214,23 @@ export default function SettingsScreen() {
 
         {/* FACTORY RESET */}
         <TouchableOpacity style={styles.resetBtn} onPress={handleFactoryReset}>
-          <Feather name="trash-2" size={20} color="white" style={{ marginRight: 10 }} />
+          <Feather
+            name="trash-2"
+            size={20}
+            color="white"
+            style={{ marginRight: 10 }}
+          />
           <Text style={styles.resetText}>Factory Reset App</Text>
         </TouchableOpacity>
 
         {/* LOGOUT */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Feather name="log-out" size={20} color="#E53935" style={{ marginRight: 10 }} />
+          <Feather
+            name="log-out"
+            size={20}
+            color="#E53935"
+            style={{ marginRight: 10 }}
+          />
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
 
