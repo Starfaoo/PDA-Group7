@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   NativeScrollEvent,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useApp } from "./context"; 
+import { useApp } from "./context";
 
 const { width } = Dimensions.get("window");
 
@@ -19,38 +19,50 @@ const SLIDES = [
   {
     id: "1",
     title: "Welcome to AgriLens",
-    description: "Capture photos of your plant leaves and instantly identify diseases.",
+    description:
+      "Capture photos of your plant leaves and instantly identify diseases.",
     image: require("../assets/images/Group9.png"),
   },
   {
     id: "2",
     title: "Identify Plant Diseases",
-    description: "Take a photo or upload an image of your plant leaf for quick analysis.",
+    description:
+      "Take a photo or upload an image of your plant leaf for quick analysis.",
     image: require("../assets/images/Group 10.png"),
   },
   {
     id: "3",
     title: "Track Your Plants",
-    description: "Keep a history of all your scans and monitor plant health over time.",
+    description:
+      "Keep a history of all your scans and monitor plant health over time.",
     image: require("../assets/images/Group 11.png"),
   },
   {
     id: "4",
     title: "Get Treatment Tips",
-    description: "Receive personalized recommendations to treat and prevent diseases.",
+    description:
+      "Receive personalized recommendations to treat and prevent diseases.",
     image: require("../assets/images/amico.png"),
   },
 ];
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const { completeOnboarding } = useApp(); 
+  const { completeOnboarding } = useApp();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isSplash, setIsSplash] = useState(true);
   const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsSplash(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleFinish = async () => {
     try {
-      await completeOnboarding(); 
+      await completeOnboarding();
       router.replace("/login");
     } catch (e) {
       console.error("Failed to finish onboarding", e);
@@ -72,6 +84,19 @@ export default function OnboardingScreen() {
     const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
     setCurrentIndex(slideIndex);
   };
+
+  if (isSplash) {
+    return (
+      <View style={styles.splashContainer}>
+        <Image
+          source={require("../assets/images/Eco_Friendly_Logo_Badge_Label_Sign__Ecology__Eco__Friendly_PNG_and_Vector-removebg-preview 2.png")}
+          style={styles.splashLogo}
+          resizeMode="contain"
+        />
+        <Text style={styles.splashText}>AgriLens</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -127,7 +152,7 @@ export default function OnboardingScreen() {
             />
           ))}
         </View>
-        
+
         <TouchableOpacity style={styles.button} onPress={handleNext}>
           <Text style={styles.buttonText}>
             {currentIndex === SLIDES.length - 1 ? "Get Started" : "Next"}
@@ -189,4 +214,20 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonText: { color: "white", fontSize: 18, fontWeight: "bold" },
+  splashContainer: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  splashLogo: {
+    width: 200,
+    height: 200,
+    marginBottom: 20,
+  },
+  splashText: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#000",
+  },
 });
