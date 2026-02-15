@@ -21,7 +21,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.cpegroup7.agrilens"
+      "package": "Com.PDA.Agrilens"
     },
     "web": {
       "output": "static",
