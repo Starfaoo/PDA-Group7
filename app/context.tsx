@@ -1,79 +1,87 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// 1. Define what a "Scan" looks like
-export type ScanResult = {
-  id: string;
-  date: string;
-  disease: string;
-  confidence: string;
-  imageUri: string;
-  description?: string;
-  treatment?: string;
-  color: string; // Color code for the disease status
-};
-
-// 2. Define the Context
-type AppContextType = {
-  isDarkMode: boolean;
-  toggleTheme: () => void;
-  history: ScanResult[];
-  addScan: (scan: ScanResult) => void;
-  clearHistory: () => void;
-};
+interface AppContextType {
+  user: any | null;
+  isLoading: boolean;
+  isOnboarded: boolean;
+  login: (email: string) => Promise<void>;
+  logout: () => Promise<void>;
+  completeOnboarding: () => Promise<void>;
+  resetApp: () => Promise<void>;
+  scans: any[];
+  addScan: (scan: any) => void;
+}
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// 3. Create the Provider
-export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [history, setHistory] = useState<ScanResult[]>([]);
+export const AppProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<any | null>(null);
+  const [isOnboarded, setIsOnboarded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [scans, setScans] = useState<any[]>([]);
 
-  // Load saved data on startup
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        // const savedUser = await AsyncStorage.getItem("user");
+        // const savedOnboarding = await AsyncStorage.getItem("hasOnboarded");
+        // if (savedUser) setUser(JSON.parse(savedUser));
+        // if (savedOnboarding === "true") setIsOnboarded(true);
+      } catch (e) {
+        console.error("Load error", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     loadData();
   }, []);
 
-  const loadData = async () => {
-    const savedTheme = await AsyncStorage.getItem('theme');
-    const savedHistory = await AsyncStorage.getItem('scanHistory');
-    if (savedTheme === 'dark') setIsDarkMode(true);
-    if (savedHistory) setHistory(JSON.parse(savedHistory));
+  const login = async (email: string) => {
+    const fakeUser = { email, displayName: email.split("@")[0] };
+    setUser(fakeUser);
+    await AsyncStorage.setItem("user", JSON.stringify(fakeUser));
   };
 
-  const toggleTheme = async () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    await AsyncStorage.setItem('theme', newMode ? 'dark' : 'light');
+  const logout = async () => {
+    setUser(null);
+    await AsyncStorage.removeItem("user");
   };
 
-  const addScan = async (scan: ScanResult) => {
-    const newHistory = [scan, ...history]; // Add to top of list
-    setHistory(newHistory);
-    await AsyncStorage.setItem('scanHistory', JSON.stringify(newHistory));
+  const completeOnboarding = async () => {
+    setIsOnboarded(true);
+    await AsyncStorage.setItem("hasOnboarded", "true");
   };
 
-  const clearHistory = async () => {
-    setHistory([]);
-    await AsyncStorage.removeItem('scanHistory');
+  const resetApp = async () => {
+    setUser(null);
+    setIsOnboarded(false);
+    await AsyncStorage.clear();
   };
+
+  const addScan = (scan: any) => setScans([scan, ...scans]);
 
   return (
-    <AppContext.Provider value={{ isDarkMode, toggleTheme, history, addScan, clearHistory }}>
+    <AppContext.Provider
+      value={{
+        user,
+        isLoading,
+        isOnboarded,
+        login,
+        logout,
+        completeOnboarding,
+        resetApp,
+        scans,
+        addScan,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
-}
+};
 
-// 4. Custom Hook for easy access
-export function useApp() {
+export const useApp = () => {
   const context = useContext(AppContext);
-  if (!context) throw new Error('useApp must be used within an AppProvider');
+  if (!context) throw new Error("useApp must be used within AppProvider");
   return context;
-}
-
-// 5. Theme Colors Helper
-export const Colors = {
-  light: { background: '#fff', text: '#333', card: '#f9f9f9', tint: '#00C853' },
-  dark: { background: '#121212', text: '#fff', card: '#1E1E1E', tint: '#00E676' }
 };

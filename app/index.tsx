@@ -1,116 +1,192 @@
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useState, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Dimensions,
+  Image,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { useApp } from "./context"; 
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
-export default function SplashScreen() {
+const SLIDES = [
+  {
+    id: "1",
+    title: "Welcome to AgriLens",
+    description: "Capture photos of your plant leaves and instantly identify diseases.",
+    image: require("../assets/images/Group9.png"),
+  },
+  {
+    id: "2",
+    title: "Identify Plant Diseases",
+    description: "Take a photo or upload an image of your plant leaf for quick analysis.",
+    image: require("../assets/images/Group 10.png"),
+  },
+  {
+    id: "3",
+    title: "Track Your Plants",
+    description: "Keep a history of all your scans and monitor plant health over time.",
+    image: require("../assets/images/Group 11.png"),
+  },
+  {
+    id: "4",
+    title: "Get Treatment Tips",
+    description: "Receive personalized recommendations to treat and prevent diseases.",
+    image: require("../assets/images/amico.png"),
+  },
+];
+
+export default function OnboardingScreen() {
   const router = useRouter();
-  const [fadeAnim] = useState(new Animated.Value(0)); // Opacity for smooth fade-in
-  const [scaleAnim] = useState(new Animated.Value(0.8)); // Scale for slight zoom effect
+  const { completeOnboarding } = useApp(); 
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    // 1. Run Entry Animation
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 5,
-        useNativeDriver: true,
-      })
-    ]).start();
+  const handleFinish = async () => {
+    try {
+      await completeOnboarding(); 
+      router.replace("/login");
+    } catch (e) {
+      console.error("Failed to finish onboarding", e);
+    }
+  };
 
-    // 2. Check User Status & Navigate
-    const prepareApp = async () => {
-      // Wait for 2.5 seconds (Simulate loading)
-      await new Promise(resolve => setTimeout(resolve, 2500));
+  const handleNext = () => {
+    if (currentIndex < SLIDES.length - 1) {
+      flatListRef.current?.scrollToIndex({
+        index: currentIndex + 1,
+        animated: true,
+      });
+    } else {
+      handleFinish();
+    }
+  };
 
-      try {
-        const hasSeenOnboarding = await AsyncStorage.getItem('hasSeenOnboarding');
-        
-        // Navigate based on history
-        if (hasSeenOnboarding === 'true') {
-          router.replace('/login');
-        } else {
-          router.replace('/onboarding');
-        }
-      } catch (e) {
-        // Fallback if storage fails
-        router.replace('/onboarding');
-      }
-    };
-
-    prepareApp();
-  }, []);
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+    setCurrentIndex(slideIndex);
+  };
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[
-        styles.logoContainer, 
-        { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
-      ]}>
-        
-        {/* Leaf Logo (Mimicking the 'ECO' design) */}
-        <View style={styles.iconContainer}>
-          <MaterialCommunityIcons name="leaf" size={120} color="#458c49" />
-          {/* Decorative smaller leaf to mimic the abstract shape */}
-          <MaterialCommunityIcons name="leaf" size={60} color="#2e6b32" style={styles.smallLeaf} />
-        </View>
+      {/* Header with Skip Button */}
+      <View style={styles.header}>
+        <View style={{ width: 50 }} />
+        <TouchableOpacity onPress={handleFinish}>
+          <Text style={styles.skipText}>Skip →</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* App Name */}
-        <Text style={styles.appName}>AgriLens</Text>
-      </Animated.View>
-      
-      {/* Optional: Loading text at bottom */}
-     
+      <FlatList
+        ref={flatListRef}
+        data={SLIDES}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        keyExtractor={(item) => item.id}
+        getItemLayout={(_, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
+        renderItem={({ item }) => (
+          <View style={styles.slide}>
+            <View style={styles.imageContainer}>
+              <Image
+                source={item.image} // Simplified: No more {uri}
+                style={styles.image}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.description}>{item.description}</Text>
+            </View>
+          </View>
+        )}
+      />
+
+      {/* Footer with Pagination and Button */}
+      <View style={styles.footer}>
+        <View style={styles.pagination}>
+          {SLIDES.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.dot,
+                currentIndex === index ? styles.activeDot : styles.inactiveDot,
+              ]}
+            />
+          ))}
+        </View>
+        
+        <TouchableOpacity style={styles.button} onPress={handleNext}>
+          <Text style={styles.buttonText}>
+            {currentIndex === SLIDES.length - 1 ? "Get Started" : "Next"}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff', // White background as per design
-    justifyContent: 'center',
-    alignItems: 'center',
+  container: { flex: 1, backgroundColor: "#fff", paddingTop: 50 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    marginBottom: 10,
   },
-  logoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconContainer: {
-    position: 'relative',
-    width: 140,
-    height: 140,
-    justifyContent: 'center',
-    alignItems: 'center',
+  skipText: { fontSize: 16, color: "#333", fontWeight: "600" },
+  slide: { width: width, alignItems: "center", paddingHorizontal: 30 },
+  imageContainer: {
+    flex: 0.6,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
     marginBottom: 20,
   },
-  smallLeaf: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    transform: [{ rotate: '-45deg' }],
-    opacity: 0.9,
+  image: { width: "90%", height: "90%" },
+  textContainer: { flex: 0.4, alignItems: "center" },
+  title: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#000",
+    textAlign: "center",
+    marginBottom: 15,
   },
-  appName: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#458c49', // The specific green from your screenshot
-    letterSpacing: 2,
-    fontFamily: 'monospace', // Matches the stylized font in the image
+  description: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 22,
+    paddingHorizontal: 10,
   },
-  footerText: {
-    position: 'absolute',
-    bottom: 50,
-    color: '#aaa',
-    fontSize: 12,
-    letterSpacing: 1,
-  }
+  footer: { paddingHorizontal: 20, paddingBottom: 50 },
+  pagination: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 30,
+  },
+  dot: { height: 6, borderRadius: 3, marginHorizontal: 3 },
+  activeDot: { width: 25, backgroundColor: "#00C853" },
+  inactiveDot: { width: 6, backgroundColor: "#ccc" },
+  button: {
+    backgroundColor: "#00C853",
+    height: 55,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+  },
+  buttonText: { color: "white", fontSize: 18, fontWeight: "bold" },
 });

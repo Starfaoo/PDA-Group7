@@ -1,0 +1,10 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Setup Firebase Project",
+			"type": "shell",
+			"command": "echo \"To fix the login issue, you need a REAL Firebase project. Follow these steps:\" && echo \"\" && echo \"1. Visit https://console.firebase.google.com/ && echo \"2. Create a new project (name it whatever you want)\" && echo \"3. Go to Project Settings\" && echo \"4. Copy your Web SDK config\" && echo \"5. Update .env with the values\" && echo \"6. In Authentication section, enable Email/Password provider\" && echo \"7. Your login will then work!\" && echo \"\" && echo \"The current credentials do not map to a real Firebase project.\""
+		}
+	]
+}

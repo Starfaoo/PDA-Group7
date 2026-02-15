@@ -1,50 +1,127 @@
-# Welcome to your Expo app 👋
+# AgriLens - Plant Disease Analyzer
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native Expo app for analyzing plant diseases using AI. Features authentication, image capture, and Google Gemini AI-powered plant health analysis.
 
-## Get started
+## Features
 
-1. Install dependencies
+- 🔐 User Authentication (Email/Password & Google Sign-in)
+- 📸 Plant Image Capture and Upload
+- 🤖 AI-Powered Disease Detection using Google Gemini
+- 📊 Health Analysis with Treatment Recommendations
+- 📱 Cross-platform (iOS, Android, Web)
+- 🌙 Dark/Light Theme Support
+- 📈 Scan History Tracking
 
-   ```bash
-   npm install
-   ```
+## Setup Instructions
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 1. Install Dependencies
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Environment Configuration
 
-## Learn more
+Create a `.env` file in the root directory with your API keys:
 
-To learn more about developing your project with Expo, look at the following resources:
+```env
+# Firebase Configuration (get from Firebase Console)
+EXPO_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key_here
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+EXPO_PUBLIC_FIREBASE_APP_ID=your_app_id
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+# Google Gemini API Key (get from Google AI Studio)
+EXPO_PUBLIC_GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-## Join the community
+### 3. Firebase Setup
 
-Join our community of developers creating universal apps.
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create a new project
+3. Enable Authentication with Email/Password and Google providers
+4. Get your Firebase config from Project Settings
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### 4. Google Gemini API Setup
+
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Create an API key for Gemini 1.5 Flash model
+
+### 5. Run the App
+
+```bash
+npm start
+```
+
+## App Flow
+
+1. **Splash Screen** - Checks authentication status
+2. **Onboarding** - First-time user introduction
+3. **Login/Signup** - User authentication
+4. **Home** - Dashboard with recent scans
+5. **Upload** - Capture or select plant image
+6. **Processing** - AI analysis with progress indicator
+7. **Results** - Detailed analysis with treatment recommendations
+
+## Tech Stack
+
+- **Framework**: Expo SDK 54
+- **Language**: TypeScript
+- **Authentication**: Firebase Auth
+- **AI**: Google Gemini 1.5 Flash
+- **State Management**: React Context
+- **Navigation**: Expo Router
+- **Styling**: React Native StyleSheet
+
+## Project Structure
+
+```
+app/
+├── _layout.tsx          # Root layout with context provider
+├── index.tsx            # Splash screen
+├── onboarding.tsx       # Onboarding flow
+├── login.tsx            # Authentication screen
+├── home.tsx             # Main dashboard
+├── upload.tsx           # Image capture/upload
+├── processing.tsx       # Analysis progress
+├── result.tsx           # Analysis results
+├── history.tsx          # Scan history
+├── settings.tsx         # App settings
+└── context.tsx          # Global state management
+
+services/
+└── geminiService.ts     # AI analysis service
+
+firebase.js              # Firebase configuration
+```
+
+## Development
+
+### Available Scripts
+
+- `npm start` - Start development server
+- `npm run android` - Run on Android emulator
+- `npm run ios` - Run on iOS simulator
+- `npm run web` - Run in web browser
+- `npm run lint` - Run ESLint
+
+### Building for Production
+
+```bash
+npx expo build:android
+npx expo build:ios
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.

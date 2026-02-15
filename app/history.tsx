@@ -1,45 +1,51 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, TextInput, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useApp, Colors } from './context'; // Import Context
+import { Feather, Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import {
+    Alert,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { useApp } from "./context"; // Import Context
 
 export default function HistoryScreen() {
   const router = useRouter();
-  const { history, isDarkMode, clearHistory } = useApp(); // You might want to add a deleteOne function to context later
-  
-  // State for Search and Filters
-  const [searchText, setSearchText] = useState('');
-  const [activeFilter, setActiveFilter] = useState('All'); // 'All', 'Healthy', 'Diseased'
+  const { scans } = useApp(); // Use scans from context
 
-  // Dynamic Theme
-  const theme = isDarkMode ? Colors.dark : Colors.light;
-  const textColor = theme.text;
-  const cardBg = isDarkMode ? '#1E1E1E' : '#FFFFFF';
+  // State for Search and Filters
+  const [searchText, setSearchText] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All"); // 'All', 'Healthy', 'Diseased'
 
   // 🔍 Filter Logic
-  const filteredData = history.filter(item => {
+  const filteredData = scans.filter((item) => {
     // 1. Text Search
-    const matchesSearch = item.disease.toLowerCase().includes(searchText.toLowerCase()) || 
-                          (item.description && item.description.toLowerCase().includes(searchText.toLowerCase()));
-    
+    const matchesSearch =
+      item.disease.toLowerCase().includes(searchText.toLowerCase()) ||
+      (item.description &&
+        item.description.toLowerCase().includes(searchText.toLowerCase()));
+
     // 2. Category Filter
     let matchesFilter = true;
-    if (activeFilter === 'Healthy') matchesFilter = item.disease === 'Healthy Plant';
-    if (activeFilter === 'Diseased') matchesFilter = item.disease !== 'Healthy Plant';
+    if (activeFilter === "Healthy")
+      matchesFilter = item.disease.toLowerCase().includes("healthy");
+    if (activeFilter === "Diseased")
+      matchesFilter = !item.disease.toLowerCase().includes("healthy");
 
     return matchesSearch && matchesFilter;
   });
 
   const handleDelete = (id: string) => {
-    // In a real app, you'd call a delete function from context.
-    // For now, we'll just show an alert since we only implemented clearHistory globally.
-    Alert.alert("Delete", "Delete feature would remove this item.");
+    Alert.alert("Delete", "Delete feature not yet implemented.");
   };
 
   const renderItem = ({ item }: { item: any }) => {
-    const isHealthy = item.disease === 'Healthy Plant';
-    
+    const isHealthy = item.disease.toLowerCase().includes("healthy");
+
     return (
       <View style={styles.itemWrapper}>
         {/* Date Header above card */}
@@ -49,40 +55,58 @@ export default function HistoryScreen() {
         </View>
 
         {/* Main Card */}
-        <View style={[styles.card, { backgroundColor: cardBg }]}>
+        <View style={[styles.card, { backgroundColor: "#FFFFFF" }]}>
           {/* Left: Image */}
           <Image source={{ uri: item.imageUri }} style={styles.thumbnail} />
 
           {/* Middle: Info */}
           <View style={styles.cardInfo}>
             <View style={styles.nameRow}>
-              <Text style={[styles.plantName, { color: textColor }]}>
-                {isHealthy ? "Plant" : "Infected"}
+              <Text style={[styles.plantName, { color: "#333" }]}>
+                {isHealthy ? "Healthy" : "Diseased"}
               </Text>
               {/* Status Icon */}
-              <View style={[styles.statusIcon, { backgroundColor: isHealthy ? '#E8F5E9' : '#FFEBEE' }]}>
+              <View
+                style={[
+                  styles.statusIcon,
+                  { backgroundColor: isHealthy ? "#E8F5E9" : "#FFEBEE" },
+                ]}
+              >
                 {isHealthy ? (
-                   <Ionicons name="leaf" size={12} color="#4CAF50" />
+                  <Ionicons name="leaf" size={12} color="#4CAF50" />
                 ) : (
-                   <Ionicons name="alert-circle" size={12} color="#FF5252" />
+                  <Ionicons name="alert-circle" size={12} color="#FF5252" />
                 )}
               </View>
             </View>
-            
-            <Text style={styles.diseaseName} numberOfLines={1}>{item.disease}</Text>
+
+            <Text style={styles.diseaseName} numberOfLines={1}>
+              {item.disease}
+            </Text>
             <Text style={styles.confidence}>Confidence: {item.confidence}</Text>
           </View>
 
           {/* Right: Actions */}
           <View style={styles.actions}>
-            <TouchableOpacity 
-              style={styles.viewBtn} 
-              onPress={() => router.push({ pathname: '/result', params: { ...item } })}
+            <TouchableOpacity
+              style={styles.viewBtn}
+              onPress={() =>
+                router.push({
+                  pathname: "/result",
+                  params: {
+                    ...item,
+                    factors: JSON.stringify(item.factors),
+                  },
+                })
+              }
             >
               <Text style={styles.viewText}>View</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              onPress={() => handleDelete(item.id)}
+            >
               <Feather name="trash-2" size={18} color="#7E57C2" />
             </TouchableOpacity>
           </View>
@@ -92,13 +116,15 @@ export default function HistoryScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F9F9F9' }]}>
-      
+    <View style={[styles.container, { backgroundColor: "#F9F9F9" }]}>
       {/* 1. Green Header Area */}
       <View style={styles.header}>
         {/* Top Nav */}
         <View style={styles.navRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Scan History</Text>
@@ -108,7 +134,7 @@ export default function HistoryScreen() {
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Feather name="search" size={20} color="rgba(255,255,255,0.7)" />
-          <TextInput 
+          <TextInput
             style={styles.searchInput}
             placeholder="Search by plant or disease..."
             placeholderTextColor="rgba(255,255,255,0.6)"
@@ -119,19 +145,25 @@ export default function HistoryScreen() {
 
         {/* Filter Chips */}
         <View style={styles.filterRow}>
-          {['All', 'Healthy', 'Diseased'].map((filter) => (
-            <TouchableOpacity 
+          {["All", "Healthy", "Diseased"].map((filter) => (
+            <TouchableOpacity
               key={filter}
               style={[
-                styles.filterChip, 
-                activeFilter === filter ? styles.activeChip : styles.inactiveChip
+                styles.filterChip,
+                activeFilter === filter
+                  ? styles.activeChip
+                  : styles.inactiveChip,
               ]}
               onPress={() => setActiveFilter(filter)}
             >
-              <Text style={[
-                styles.filterText, 
-                activeFilter === filter ? styles.activeFilterText : styles.inactiveFilterText
-              ]}>
+              <Text
+                style={[
+                  styles.filterText,
+                  activeFilter === filter
+                    ? styles.activeFilterText
+                    : styles.inactiveFilterText,
+                ]}
+              >
                 {filter}
               </Text>
             </TouchableOpacity>
@@ -162,7 +194,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    backgroundColor: '#006d38', // Dark Green
+    backgroundColor: "#006d38", // Dark Green
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -170,9 +202,9 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 30,
   },
   navRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   backButton: {
@@ -180,27 +212,27 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
+    fontWeight: "bold",
+    color: "white",
   },
   searchContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.15)",
     borderRadius: 12,
     paddingHorizontal: 15,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   searchInput: {
     flex: 1,
     marginLeft: 10,
-    color: 'white',
+    color: "white",
     fontSize: 16,
   },
   filterRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "flex-start",
   },
   filterChip: {
     paddingVertical: 8,
@@ -209,20 +241,20 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   activeChip: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   inactiveChip: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
   filterText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   activeFilterText: {
-    color: '#006d38',
+    color: "#006d38",
   },
   inactiveFilterText: {
-    color: 'rgba(255,255,255,0.9)',
+    color: "rgba(255,255,255,0.9)",
   },
   listContent: {
     padding: 20,
@@ -232,22 +264,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   dateHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
     marginLeft: 5,
   },
   dateText: {
     fontSize: 12,
-    color: '#888',
+    color: "#888",
     marginLeft: 6,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   card: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderRadius: 16,
     padding: 12,
-    alignItems: 'center',
+    alignItems: "center",
     // Shadow
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -259,70 +291,70 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 12,
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
   },
   cardInfo: {
     flex: 1,
     marginLeft: 15,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 4,
   },
   plantName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginRight: 8,
   },
   statusIcon: {
     width: 18,
     height: 18,
     borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   diseaseName: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 4,
   },
   confidence: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
   },
   actions: {
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 70, 
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    height: 70,
     paddingVertical: 2,
   },
   viewBtn: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
   },
   viewText: {
     fontSize: 12,
-    color: '#555',
-    fontWeight: '600',
+    color: "#555",
+    fontWeight: "600",
   },
   deleteBtn: {
-    backgroundColor: '#F3E5F5', // Light purple
+    backgroundColor: "#F3E5F5", // Light purple
     width: 32,
     height: 32,
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyState: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 50,
   },
   emptyText: {
-    color: '#888',
+    color: "#888",
     marginTop: 10,
     fontSize: 16,
   },

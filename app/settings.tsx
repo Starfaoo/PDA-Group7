@@ -1,28 +1,25 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import React from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Switch,
+  StatusBar,
 } from "react-native";
-import { Colors, useApp } from "./context"; // Import Context
+import { useApp } from "./context"; 
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { isDarkMode, toggleTheme, clearHistory } = useApp();
+  
+  // Get everything we need from Context
+  const { user, logout, isDarkMode, toggleTheme, resetApp } = useApp();
 
-  // Dynamic Theme Colors
-  const theme = isDarkMode ? Colors.dark : Colors.light;
-  const bgColor = isDarkMode ? "#121212" : "#F5F5F5";
-  const sectionBg = isDarkMode ? "#1E1E1E" : "#FFFFFF";
-  const textColor = theme.text;
-
-  // ✅ LOGOUT: Navigate back to login
+  // 1. LOGOUT
   const handleLogout = () => {
     Alert.alert("Log Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
@@ -31,23 +28,21 @@ export default function SettingsScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            // Clear user session
-            await AsyncStorage.removeItem("hasSeenOnboarding");
-            // Force navigate to login
-            router.push("/login");
+            await logout();
+            router.replace("/login");
           } catch (error) {
-            router.push("/login");
+            // Error is handled in context, but good to have backup
           }
         },
       },
     ]);
   };
 
-  // ⚠️ FACTORY RESET: Wipes Storage + Resets to Splash
+  // 2. FACTORY RESET
   const handleFactoryReset = () => {
     Alert.alert(
-      "Reset App",
-      "This will permanently delete ALL data (scans, settings, onboarding status) and restart the app.\n\nAre you sure?",
+      "Factory Reset",
+      "This will clear ALL data (including onboarding status) and log you out. This cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -55,26 +50,33 @@ export default function SettingsScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              // 1. Clear React State (Context)
-              clearHistory();
-
-              // 2. NUKE EVERYTHING from Storage
-              await AsyncStorage.clear();
-
-              // 3. Go to splash screen (index)
-              router.push("/");
+              await resetApp();
+              // Force navigation to onboarding
+              router.replace("/onboarding"); 
             } catch (error) {
-              Alert.alert("Error", "Failed to reset data. Please try again.");
+              Alert.alert("Error", "Failed to reset device data.");
             }
           },
         },
-      ],
+      ]
     );
   };
 
+  // 3. DYNAMIC THEME COLORS
+  const theme = {
+    bg: isDarkMode ? "#121212" : "#F5F5F5",
+    cardBg: isDarkMode ? "#1E1E1E" : "#FFFFFF",
+    text: isDarkMode ? "#FFFFFF" : "#333333",
+    subText: isDarkMode ? "#AAAAAA" : "#999999",
+    icon: isDarkMode ? "#FFFFFF" : "#333333",
+    divider: isDarkMode ? "#333333" : "#F0F0F0",
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
-      {/* 1. Green Header */}
+    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+      <StatusBar barStyle="light-content" />
+      
+      {/* Green Header */}
       <View style={styles.headerBackground}>
         <View style={styles.headerNav}>
           <TouchableOpacity
@@ -93,10 +95,11 @@ export default function SettingsScreen() {
             <Ionicons name="person-outline" size={24} color="white" />
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>John Doe</Text>
-            <Text style={styles.profileEmail}>johndoe@gmail.com</Text>
+            <Text style={styles.profileName}>
+              {user?.displayName || user?.email?.split("@")[0] || "User"}
+            </Text>
+            <Text style={styles.profileEmail}>{user?.email || "No email"}</Text>
           </View>
-          <Feather name="chevron-right" size={24} color="white" />
         </View>
       </View>
 
@@ -104,158 +107,93 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 2. Account */}
+        {/* ACCOUNT SECTION */}
         <Text style={styles.sectionHeader}>ACCOUNT</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: sectionBg }]}>
+        <View style={[styles.sectionContainer, { backgroundColor: theme.cardBg }]}>
           <TouchableOpacity
             style={styles.row}
-            onPress={() =>
-              Alert.alert("Profile", "Edit profile feature coming soon!")
-            }
+            onPress={() => Alert.alert("Profile", "Edit profile coming soon!")}
           >
             <View style={styles.rowLeft}>
-              <Feather name="user" size={20} color={textColor} />
+              <Feather name="user" size={20} color={theme.icon} />
               <View style={styles.rowTextContainer}>
-                <Text style={[styles.rowTitle, { color: textColor }]}>
-                  Profile
-                </Text>
-                <Text style={styles.rowSub}>Edit details</Text>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>Profile</Text>
+                <Text style={[styles.rowSub, { color: theme.subText }]}>Edit details</Text>
               </View>
             </View>
             <Feather name="chevron-right" size={20} color="#ccc" />
           </TouchableOpacity>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: theme.divider }]} />
 
           <View style={styles.row}>
             <View style={styles.rowLeft}>
-              <Feather name="bell" size={20} color={textColor} />
-              <Text
-                style={[styles.rowTitle, { color: textColor, marginLeft: 15 }]}
-              >
+              <Feather name="bell" size={20} color={theme.icon} />
+              <Text style={[styles.rowTitle, { color: theme.text, marginLeft: 15 }]}>
                 Notifications
               </Text>
             </View>
-            <Switch
-              value={true}
-              trackColor={{ false: "#767577", true: "#00C853" }}
-            />
+            <Switch value={true} trackColor={{ false: "#767577", true: "#00C853" }} />
           </View>
         </View>
 
-        {/* 3. Preferences */}
+        {/* PREFERENCE SECTION */}
         <Text style={styles.sectionHeader}>PREFERENCE</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: sectionBg }]}>
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() =>
-              Alert.alert("Language", "Language selection coming soon!")
-            }
-          >
-            <View style={styles.rowLeft}>
-              <Feather name="globe" size={20} color={textColor} />
-              <View style={styles.rowTextContainer}>
-                <Text style={[styles.rowTitle, { color: textColor }]}>
-                  Language
-                </Text>
-                <Text style={styles.rowSub}>English</Text>
-              </View>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
-
+        <View style={[styles.sectionContainer, { backgroundColor: theme.cardBg }]}>
           <View style={styles.row}>
             <View style={styles.rowLeft}>
-              <Feather name="moon" size={20} color={textColor} />
-              <Text
-                style={[styles.rowTitle, { color: textColor, marginLeft: 15 }]}
-              >
+              <Feather name={isDarkMode ? "moon" : "sun"} size={20} color={theme.icon} />
+              <Text style={[styles.rowTitle, { color: theme.text, marginLeft: 15 }]}>
                 Dark Mode
               </Text>
             </View>
-            <Switch
-              value={isDarkMode}
+            {/* THEME TOGGLE SWITCH */}
+            <Switch 
+              value={isDarkMode} 
               onValueChange={toggleTheme}
               trackColor={{ false: "#767577", true: "#00C853" }}
             />
           </View>
         </View>
 
-        {/* 4. About */}
+        {/* ABOUT SECTION */}
         <Text style={styles.sectionHeader}>ABOUT</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: sectionBg }]}>
+        <View style={[styles.sectionContainer, { backgroundColor: theme.cardBg }]}>
           <TouchableOpacity
             style={styles.row}
-            onPress={() =>
-              Alert.alert("Privacy", "Privacy Policy content goes here.")
-            }
+            onPress={() => Alert.alert("Privacy", "Standard Privacy Policy.")}
           >
             <View style={styles.rowLeft}>
-              <Feather name="shield" size={20} color={textColor} />
-              <Text
-                style={[styles.rowTitle, { color: textColor, marginLeft: 15 }]}
-              >
+              <Feather name="shield" size={20} color={theme.icon} />
+              <Text style={[styles.rowTitle, { color: theme.text, marginLeft: 15 }]}>
                 Privacy Policy
               </Text>
             </View>
             <Feather name="chevron-right" size={20} color="#ccc" />
           </TouchableOpacity>
 
-          <View style={styles.divider} />
-
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() =>
-              Alert.alert("Help", "Support contact info goes here.")
-            }
-          >
-            <View style={styles.rowLeft}>
-              <Feather name="help-circle" size={20} color={textColor} />
-              <Text
-                style={[styles.rowTitle, { color: textColor, marginLeft: 15 }]}
-              >
-                Help & Support
-              </Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: theme.divider }]} />
 
           <View style={styles.row}>
             <View style={styles.rowLeft}>
-              <Feather name="info" size={20} color={textColor} />
+              <Feather name="info" size={20} color={theme.icon} />
               <View style={styles.rowTextContainer}>
-                <Text style={[styles.rowTitle, { color: textColor }]}>
-                  App Version
-                </Text>
-                <Text style={styles.rowSub}>1.0.0</Text>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>App Version</Text>
+                <Text style={[styles.rowSub, { color: theme.subText }]}>1.0.0</Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* 5. DANGER ZONE (Factory Reset) */}
+        {/* FACTORY RESET */}
         <TouchableOpacity style={styles.resetBtn} onPress={handleFactoryReset}>
-          <Feather
-            name="trash-2"
-            size={20}
-            color="white"
-            style={{ marginRight: 10 }}
-          />
+          <Feather name="trash-2" size={20} color="white" style={{ marginRight: 10 }} />
           <Text style={styles.resetText}>Factory Reset App</Text>
         </TouchableOpacity>
 
-        {/* 6. Logout */}
+        {/* LOGOUT */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Feather
-            name="log-out"
-            size={20}
-            color="#E53935"
-            style={{ marginRight: 10 }}
-          />
+          <Feather name="log-out" size={20} color="#E53935" style={{ marginRight: 10 }} />
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
 
@@ -328,23 +266,19 @@ const styles = StyleSheet.create({
   rowLeft: { flexDirection: "row", alignItems: "center" },
   rowTextContainer: { marginLeft: 15 },
   rowTitle: { fontSize: 16, fontWeight: "500" },
-  rowSub: { fontSize: 12, color: "#999", marginTop: 2 },
-  divider: { height: 1, backgroundColor: "#F0F0F0", marginLeft: 35 },
-
-  // Factory Reset Button Style
+  rowSub: { fontSize: 12, marginTop: 2 },
+  divider: { height: 1, marginLeft: 35 },
   resetBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#D32F2F", // Strong Red
+    backgroundColor: "#D32F2F",
     padding: 15,
     borderRadius: 15,
     marginTop: 30,
     elevation: 2,
   },
   resetText: { color: "white", fontSize: 16, fontWeight: "bold" },
-
-  // Logout Button Style
   logoutBtn: {
     flexDirection: "row",
     alignItems: "center",
