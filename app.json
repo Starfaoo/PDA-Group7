@@ -4,7 +4,7 @@
     "slug": "agrilens",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Eco_Friendly_Logo_Badge_Label_Sign__Ecology__Eco__Friendly_PNG_and_Vector-removebg-preview 2.png",
+    "icon": "./assets/images/app-icon2.png",
     "scheme": "pda",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -32,7 +32,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Eco_Friendly_Logo_Badge_Label_Sign__Ecology__Eco__Friendly_PNG_and_Vector-removebg-preview 2.png",
+          "image": "./assets/images/app-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",

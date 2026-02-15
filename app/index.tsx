@@ -89,7 +89,7 @@ export default function OnboardingScreen() {
     return (
       <View style={styles.splashContainer}>
         <Image
-          source={require("../assets/images/Eco_Friendly_Logo_Badge_Label_Sign__Ecology__Eco__Friendly_PNG_and_Vector-removebg-preview 2.png")}
+          source={require("../assets/images/app-icon.png")}
           style={styles.splashLogo}
           resizeMode="contain"
         />
